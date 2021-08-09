@@ -16,7 +16,7 @@
  *
  * VolcanBaruChiriqui's solution using gcc 5.4.0 on Ubuntu 16.04:
  * 
- * - compile using command: gcc qkdDecomposerC.c -lm -o qkdDecomposerC 
+ * - compile using command: gcc qkdDecomposer.c -lm -o qkdDecomposer 
  *
  * - in qkdDecomposer.h, add/remove preprocessor definition HUMAN_READABLE_OUTPUT
  *   to save decomposed info in text/binary format.
