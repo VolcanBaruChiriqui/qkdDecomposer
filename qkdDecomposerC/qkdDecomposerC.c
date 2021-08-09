@@ -12,35 +12,28 @@
  * in python with the function in saveBinary.py. By understanding this function, 
  * you should be able to decipher the data format.
  *
- * VolcanBaruChiriqui's solution using gcc 5.4.0 on Ubuntu 16.04:
- * 
- * - compile using command: gcc qkdDecomposerC.c -lm -o qkdDecomposerC 
- *
- * - in qkdDecomposer.h, add/remove preprocessor definition HUMAN_READABLE_OUTPUT
- *   to save decomposed info in text/binary format.
- *
- * - add/remove following preprocessor definitions to measure the respective timings
- *
- *	#define MEASURE_READ_TIME
- *	#define MEASURE_PROCESS_TIME
- *	#define MEASURE_WRITE_TIME
+ * VolcanBaruChiriqui's solution using Microsoft Visual Studio Community 2017:
+ *	Debug x86 preprocessor options set:	HUMAN_READABLE_OUTPUT;MEASURE_READ_TIME;MEASURE_PROCESS_TIME;MEASURE_WRITE_TIME;_CRT_SECURE_NO_WARNINGS
+ *	Release x86 preprocessor options set: MEASURE_READ_TIME;MEASURE_PROCESS_TIME;MEASURE_WRITE_TIME;_CRT_SECURE_NO_WARNINGS
  ***************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <math.h>
-#include "qkdDecomposer.h"
-
-#define PACKAGE "qkdDecomposerC"
-#define VERSION "0.1.0"
 
 //#define _POSIX_C_SOURCE 199309L
-#include <time.h>
-/*
+//#include <time.h>
 #include <windows.h>
 #include <minwinbase.h>
 #define CLOCK_PROCESS_CPUTIME_ID 2 //dummy #define for clock_gettime signature compatibility
+
+#define PACKAGE "qkdDecomposerC"
+#define VERSION "0.2.0"
+
+static FILE *inputFile = 0;
+static FILE *timeStampFile = 0;
+static FILE *detectorClickFile = 0;
 
 struct timespec { long tv_sec; long tv_nsec; };    //header part
 
@@ -49,7 +42,7 @@ int64_t difftimespec_ns(const struct timespec stop, const struct timespec start)
 	return ((int64_t)stop.tv_sec - (int64_t)start.tv_sec) * (int64_t)1000000000
 		+ ((int64_t)stop.tv_nsec - (int64_t)start.tv_nsec);
 }
-// From Asain Kujovic's answer at https://stackoverflow.com/questions/5404277/porting-clock-gettime-to-windows
+/* From Asain Kujovic's answer at https://stackoverflow.com/questions/5404277/porting-clock-gettime-to-windows */
 //struct timespec { long tv_sec; long tv_nsec; };    //header part
 //int clock_gettime(int X, struct timespec *spec)      //C-file part
 //{
@@ -84,7 +77,7 @@ int clock_gettime(int X, struct timespec *spec)
 	if (!(spec->tv_nsec < exp9)) { spec->tv_sec++; spec->tv_nsec -= exp9; }
 	return 0;
 }
-// From Asain Kujovic's answer
+/* From Asain Kujovic's answer */
 
 
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
@@ -112,17 +105,7 @@ int64_t difftimespec_us(const struct timeval stop, const struct timeval start)
 	return ((int64_t)stop.tv_sec - (int64_t)start.tv_sec) * (int64_t)1000000
 		+ ((int64_t)stop.tv_usec - (int64_t)start.tv_usec);
 }
-*/
 
-static FILE *inputFile = 0;
-static FILE *timeStampFile = 0;
-static FILE *detectorClickFile = 0;
-
-int64_t difftimespec_ns(const struct timespec stop, const struct timespec start)
-{
-	return ((int64_t)stop.tv_sec - (int64_t)start.tv_sec) * (int64_t)1000000000
-		+ ((int64_t)stop.tv_nsec - (int64_t)start.tv_nsec);
-}
 
 int readEventFromFile(uint32_t *m, uint32_t *l, int *eventCount)
 {
@@ -147,14 +130,12 @@ int readEventFromFile(uint32_t *m, uint32_t *l, int *eventCount)
 		return -2;
 	}
 
-	++(*eventCount);
-
 #ifdef MEASURE_READ_TIME
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stopTime);
 	int64_t elapsed = difftimespec_ns(stopTime, startTime);
 	//gettimeofday(&stopTime, NULL);
 	//int64_t elapsed = difftimespec_us(stopTime, startTime);
-	printf("event:% 5d\treadtime:% 9" PRId64, *eventCount, elapsed);
+	printf("event:% 5d\treadtime:% 9" PRId64, ++(*eventCount), elapsed);
 #endif
 
 	return 0;
@@ -208,10 +189,9 @@ int writeEventToSeparateFiles(uint64_t *stamp, uint32_t *basis)//, int *eventCou
 #ifdef MEASURE_WRITE_TIME
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stopTime);
 	int64_t elapsed = difftimespec_ns(stopTime, startTime);
-	printf("\twritetime:% 9" PRId64, elapsed);
+	printf("\twritetime:% 9" PRId64 "\n", elapsed);
 #endif
-	printf("\n");
-	
+
 	return 0;
 }
 
@@ -244,8 +224,7 @@ main(int argc, char **argv)
 			fclose(timeStampFile);
 			fclose(detectorClickFile);
 
-			printf("\nTimestamp and detector click information separately saved to timeStamp.dat and detectorClick.dat files.\n");
-			printf("\nAverage separation of %d time stamps: %" PRIu64 " ns\n\n", eventCount, accumulatedTimeStampDiff / eventCount);
+			printf("average separation of %d time stamps:% 9" PRIu64, eventCount, accumulatedTimeStampDiff / eventCount);
 		}
 
 		fclose(inputFile);
